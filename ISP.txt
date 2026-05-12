@@ -9,7 +9,7 @@ NET_ETH1=${4:-172.16.4.0/28}
 NET_ETH2=${5:-172.16.5.0/28}
 
 # 1. Настройка Hostname
-hostnamectl set-hostname "$HOSTNAME"
+hostnamectl set-hostname $HOSTNAME
 
 # 2. Настройка интерфейсов (запись в файл напрямую)
 cat <<EOF > /etc/network/interfaces
