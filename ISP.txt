@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# --- Переменные с дефолтными значениями ---
+# Формат: ${1:-значение} берет аргумент командной строки или дефолт
+HOSTNAME=${1:-isp}
+ADDR_ETH1=${2:-172.16.4.1/28}
+ADDR_ETH2=${3:-172.16.5.1/28}
+NET_ETH1=${4:-172.16.4.0/28}
+NET_ETH2=${5:-172.16.5.0/28}
+
+# 1. Настройка Hostname
+hostnamectl set-hostname "$HOSTNAME"
+
+# 2. Настройка интерфейсов (запись в файл напрямую)
+cat <<EOF > /etc/network/interfaces
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet dhcp
+
+auto eth1
+iface eth1 inet static
+    address $ADDR_ETH1
+
+auto eth2
+iface eth2 inet static
+    address $ADDR_ETH2
+EOF
+
+# 3. Включение IP Forwarding (исправлена опечатка)
+sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/' /etc/sysctl.conf
+sysctl -w net.ipv4.ip_forward=1
+
+# 4. Перезапуск сети
+systemctl restart networking
+
+# 5. Настройка NAT
+iptables -t nat -F
+iptables -t nat -A POSTROUTING -s "$NET_ETH1" -o eth0 -j MASQUERADE
+iptables -t nat -A POSTROUTING -s "$NET_ETH2" -o eth0 -j MASQUERADE
+
+# Сохранение правил
+iptables-save > /root/rules
+
+# 6. Автозагрузка правил через crontab (без интерактивного режима)
+(crontab -l 2>/dev/null; echo "@reboot /sbin/iptables-restore < /root/rules") | crontab -
+
+# 7. Время
+apt-get update && apt-get install -y tzdata
+timedatectl set-timezone Europe/Moscow
+
+echo "Настройка завершена. Hostname: $HOSTNAME, eth1: $ADDR_ETH1, eth2: $ADDR_ETH2"
