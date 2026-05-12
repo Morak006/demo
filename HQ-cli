@@ -1,0 +1,20 @@
+hostnamectl set-hostname hq-cli.au-team.irpo; exec bash
+# 2 часть
+apt-get install task-auth-ad-sssd admc gpui
+	y
+cat /etc/resolv.conf			проверка resolv (должен быть 192.168.200.2 и 192.168.100.2)
+	если только 1 есть, то перезагружаем сеть на HQ-CLI (к примеру: systemctl restart network)
+ping ya.ru				проверка пингует ли Yandex
+acc
+	выбираем АУТЕНТИФИКАЦИЯ
+	ставим точку на ДОМЕН ACTIVE DIRECTORY
+	домен: au-team.irpo
+	рабочая группа: au-team
+	имя пк: hq-cli
+	ставим точку на SSSD
+	листаем вниз 
+	применить
+		имя: Administrator
+		пароль: P@ssw0rd
+	должно появится сообщение: ДОБРО ПОЖАЛОВАТЬ
+reboot					перезагружаемся
